@@ -14,8 +14,7 @@ create table DS.FT_BALANCE_F (
   currency_rk NUMERIC,
   balance_out FLOAT,
   
-  constraint PK_FT_BALANCE_F
-  	primary key (ON_DATE, ACCOUNT_RK)
+  primary key (ON_DATE, ACCOUNT_RK)
 );
 
 create table DS.FT_POSTING_F (
@@ -25,8 +24,7 @@ create table DS.FT_POSTING_F (
   credit_amount FLOAT,
   debet_amount FLOAT,
   
-  constraint PK_FT_POSTING_F 
-  	primary key (OPER_DATE, CREDIT_ACCOUNT_RK, DEBET_ACCOUNT_RK)
+  primary key (OPER_DATE, CREDIT_ACCOUNT_RK, DEBET_ACCOUNT_RK)
 );
 
 create table DS.MD_ACCOUNT_D (
@@ -38,8 +36,7 @@ create table DS.MD_ACCOUNT_D (
   currency_rk NUMERIC not null,
   currency_code VARCHAR(3) not null,
   
-  constraint PK_MD_ACCOUNT_D
-  	primary key (DATA_ACTUAL_DATE, ACCOUNT_RK)
+  primary key (DATA_ACTUAL_DATE, ACCOUNT_RK)
 );
 
 create table DS.MD_CURRENCY_D (
@@ -49,8 +46,7 @@ create table DS.MD_CURRENCY_D (
   currency_code VARCHAR(3),
   code_iso_char VARCHAR(3),
   
-  constraint PK_MD_CURRENCY_D 
-  	primary key (CURRENCY_RK, DATA_ACTUAL_DATE)
+  primary key (CURRENCY_RK, DATA_ACTUAL_DATE)
 );
 
 create table DS.MD_EXCHANGE_RATE_D (
@@ -60,8 +56,7 @@ create table DS.MD_EXCHANGE_RATE_D (
   reduced_cource FLOAT,
   code_iso_num VARCHAR(3),
   
-  constraint PK_MD_EXCHANGE_RATE_D
-  	primary key (DATA_ACTUAL_DATE, CURRENCY_RK)
+  primary key (DATA_ACTUAL_DATE, CURRENCY_RK)
 );
 
 
@@ -95,8 +90,7 @@ create table DS.MD_LEDGER_ACCOUNT_S (
   is_revaluation VARCHAR(1),
   is_correct VARCHAR(1),
   
-  constraint PK_MD_LEDGER_ACCOUNT_S 
-  	primary key (LEDGER_ACCOUNT, START_DATE)
+  primary key (LEDGER_ACCOUNT, START_DATE)
 );
 
 
@@ -107,17 +101,24 @@ create table DS.MD_LEDGER_ACCOUNT_S (
 --drop table if exists DS.MD_EXCHANGE_RATE_D ;
 --drop table if exists DS.MD_LEDGER_ACCOUNT_S ;
 
-select 
-  fbf.on_date,
-  fbf.account_rk,
-  fbf.currency_rk,
-  fbf.balance_out 
-from ds.ft_balance_f fbf;
+select * from ds.ft_balance_f fbf ;
+
+select * from ds.md_account_d mad ;
+select * from ds.md_currency_d mcd ;
+select * from ds.md_exchange_rate_d merd ;
+select * from ds.md_ledger_account_s mlas ;
 
 insert into ds.ft_balance_f (on_date, account_rk, currency_rk, balance_out)
 values ('2020-01-01', 12, 23, 23.4);
 
-truncate ds.ft_balance_f;
+select * from ds.MD_ACCOUNT_D;
+
+select * from ds.ft_posting_f
+where 
+	  oper_date = '2018-01-09' and
+	  credit_account_rk = 1761691 and 
+	  debet_account_rk = 13630;
+
 
 --------------------
 -- Таблица LOGS
