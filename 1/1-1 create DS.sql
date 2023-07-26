@@ -113,6 +113,10 @@ select
   fbf.currency_rk,
   fbf.balance_out 
 from ds.ft_balance_f fbf;
+
+insert into ds.ft_balance_f (on_date, account_rk, currency_rk, balance_out)
+values ('2020-01-01', 12, 23, 23.4);
+
 truncate ds.ft_balance_f;
 
 --------------------
