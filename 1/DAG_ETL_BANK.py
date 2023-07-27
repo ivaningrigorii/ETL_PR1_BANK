@@ -69,7 +69,7 @@ def etl_ft_posting_f():
         parse_dates=['OPER_DATE', ],
         usecols=range(1,6)
     )
-    #ПОКА ЧТО ТУТ УДАЛЕНИЕ ПОСЛЕДНИХ ДУБЛИКАТОВ ПО PK 
+    
     df = df.drop_duplicates(
         subset=[
             'OPER_DATE', 
@@ -153,37 +153,43 @@ set_logs_start = PythonOperator(
     op_kwargs = {"status_messange":'START'},
 )
 
-etl_ft_balance_f = PythonOperator(
+sleep_5s = BashOperator(
+    task_id="sleep_5s",
+    dag=dag,
+    bash_command="sleep 5s"
+)
+
+etl_ft_balance_f_ = PythonOperator(
     dag=dag, 
     task_id="ft_balance_f", 
     python_callable=etl_ft_balance_f
 )
 
-etl_md_account_d = PythonOperator(
+etl_md_account_d_ = PythonOperator(
     dag=dag, 
     task_id="md_account_d", 
     python_callable=etl_md_account_d
 )
 
-etl_ft_posting_f = PythonOperator(
+etl_ft_posting_f_ = PythonOperator(
     dag=dag, 
     task_id="ft_posting_f", 
     python_callable=etl_ft_posting_f
 )
 
-etl_md_currency_d = PythonOperator(
+etl_md_currency_d_ = PythonOperator(
     dag=dag, 
     task_id="md_currency_d", 
     python_callable=etl_md_currency_d
 )
 
-etl_md_exchange_rate_d = PythonOperator(
+etl_md_exchange_rate_d_ = PythonOperator(
     dag=dag, 
     task_id="md_exchange_rate_d", 
     python_callable=etl_md_exchange_rate_d
 )
 
-etl_md_ledger_account_s = PythonOperator(
+etl_md_ledger_account_s_ = PythonOperator(
     dag=dag, 
     task_id="md_ledger_account_s", 
     python_callable=etl_md_ledger_account_s
@@ -198,11 +204,11 @@ set_logs_end = PythonOperator(
 
 # start--------------------------------------
 
-set_logs_start >> [
-    etl_ft_balance_f,
-    etl_md_account_d,
-    etl_ft_posting_f,
-    etl_md_currency_d,
-    etl_md_exchange_rate_d,
-    etl_md_ledger_account_s
+set_logs_start >> sleep_5s >> [
+    etl_ft_balance_f_,
+    etl_md_account_d_,
+    etl_ft_posting_f_,
+    etl_md_currency_d_,
+    etl_md_exchange_rate_d_,
+    etl_md_ledger_account_s_
 ] >> set_logs_end

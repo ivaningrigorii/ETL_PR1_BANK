@@ -136,29 +136,36 @@ commit;
 ------------------------------------------------------
 -- Проверка содержания данных
 
+-- Вывод данных ft_balance_f
+select 
+	fbf.on_date,
+	fbf.account_rk,
+	fbf.currency_rk,
+	fbf.balance_out
+from ds.ft_balance_f fbf;
 
-select * from ds.ft_balance_f fbf ;
-
-select * from ds.md_account_d mad ;
-select * from ds.md_currency_d mcd ;
-select * from ds.md_exchange_rate_d merd ;
-select * from ds.md_ledger_account_s mlas ;
-
-
-
-insert into ds.ft_balance_f (on_date, account_rk, currency_rk, balance_out)
-values ('2020-01-01', 12, 23, 23.4);
-
-select * from ds.MD_ACCOUNT_D;
-
-select * from ds.ft_posting_f;
-
-insert into logs.logs_info_etl_11_process
-values (NOW(), 'end');
+select 
+	fbf.on_date,
+	fbf.account_rk,
+	fbf.currency_rk,
+	fbf.balance_out
+from ds.ft_balance_f fbf 
+where 
+	on_date = '2017-12-31' and 
+		fbf.account_rk = 36237725;
 
 
-select CURRENT_TIMESTAMP;
+-- статистика по количеству строк для таблиц
+select
+	(select count(*) from ds.ft_balance_f fbf) as fbf,
+	(select count(*) from ds.ft_posting_f fpf ) as fpf,
+	(select count(*) from ds.md_account_d mad) as mad,
+	(select count(*) from ds.md_currency_d mcd) as mcd,
+	(select count(*) from ds.md_exchange_rate_d merd) as merd,
+	(select count(*) from ds.md_ledger_account_s mlas) as mlas;
 
+
+-- статистика по логам
 select
   liep.status ,
   cast(liep.action_date as TIMESTAMP)
