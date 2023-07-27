@@ -1,12 +1,9 @@
 --------------------
 -- Создание схемы DS
-create schema DS;
-grant usage on schema DS to neoflex_user;
-grant create on schema DS to neoflex_user;
-
--------------------
 -- Создание сущностей для DS по схеме задания
 -- Типа NUMBER в posgresql нет, аналогичный ему - NUMERIC
+
+create schema DS;
 
 create table DS.FT_BALANCE_F (
   on_date DATE not null,
@@ -93,13 +90,52 @@ create table DS.MD_LEDGER_ACCOUNT_S (
   primary key (LEDGER_ACCOUNT, START_DATE)
 );
 
+commit;
 
---drop table if exists DS.FT_BALANCE_F ;
---drop table if exists DS.FT_POSTING_F ;
---drop table if exists DS.MD_ACCOUNT_D ;
---drop table if exists DS.MD_CURRENCY_D ;
---drop table if exists DS.MD_EXCHANGE_RATE_D ;
---drop table if exists DS.MD_LEDGER_ACCOUNT_S ;
+
+--------------------
+-- LOGS
+create schema LOGS;
+
+create table LOGS.LOGS_INFO_ETL_11_PROCESS (
+	action_date TIMESTAMPTZ,
+	status VARCHAR(30)
+);
+commit;
+
+--------------------------------------------------------
+-- Удаление (для дела)
+
+drop table if exists DS.FT_BALANCE_F cascade;
+drop table if exists DS.FT_POSTING_F cascade;
+drop table if exists DS.MD_ACCOUNT_D cascade;
+drop table if exists DS.MD_CURRENCY_D cascade;
+drop table if exists DS.MD_EXCHANGE_RATE_D cascade;
+drop table if exists DS.MD_LEDGER_ACCOUNT_S cascade;
+drop schema DS;
+commit;
+
+
+drop table if exists LOGS.LOGS_INFO_ETL_11_PROCESS cascade;
+drop schema LOGS;
+commit;
+
+----------------------------------------------------------
+-- Очистка содержания
+
+ truncate DS.FT_BALANCE_F;
+ truncate DS.FT_POSTING_F;
+ truncate DS.MD_ACCOUNT_D;
+ truncate DS.MD_CURRENCY_D;
+ truncate DS.MD_EXCHANGE_RATE_D;
+ truncate DS.MD_LEDGER_ACCOUNT_S;
+ truncate LOGS.LOGS_INFO_ETL_11_PROCESS;
+ commit;
+
+
+------------------------------------------------------
+-- Проверка содержания данных
+
 
 select * from ds.ft_balance_f fbf ;
 
@@ -108,25 +144,23 @@ select * from ds.md_currency_d mcd ;
 select * from ds.md_exchange_rate_d merd ;
 select * from ds.md_ledger_account_s mlas ;
 
+
+
 insert into ds.ft_balance_f (on_date, account_rk, currency_rk, balance_out)
 values ('2020-01-01', 12, 23, 23.4);
 
 select * from ds.MD_ACCOUNT_D;
 
-select * from ds.ft_posting_f
-where 
-	  oper_date = '2018-01-09' and
-	  credit_account_rk = 1761691 and 
-	  debet_account_rk = 13630;
+select * from ds.ft_posting_f;
+
+insert into logs.logs_info_etl_11_process
+values (NOW(), 'end');
 
 
---------------------
--- Таблица LOGS
-create schema LOGS;
+select CURRENT_TIMESTAMP;
 
-create table LOGS.
-
-	
-
-
-
+select
+  liep.status ,
+  cast(liep.action_date as TIMESTAMP)
+from logs.logs_info_etl_11_process liep
+order by liep.action_date desc;
