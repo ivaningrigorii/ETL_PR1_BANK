@@ -17,6 +17,14 @@ from datetime import datetime
 
 PATH_TO_FILES_CSV = '/home/grigorii/neoflex/project/src/1/1'
 TMP_PATH_SAVE_FILES = './dag_src'
+FILES_CSV = [
+    'ft_balance_f',
+    'md_account_d',
+    'ft_posting_f',
+    'md_currency_d',
+    'md_exchange_rate_d',
+    'md_ledger_account_s'
+]
 
 postgres_hook = PostgresHook(postgres_conn_id = 'postgres_neo_bank_1')
 engine = create_engine(postgres_hook.get_uri())
@@ -59,30 +67,46 @@ def extract_csv(name_file_csv, encode_type):
 
 #-- transform tasks
 
-
-@task(task_id='transform__md_ledger_account_s')
-def transform_md_ledger_account_s(name_df):
-    columns_type_date = ['START_DATE', 'END_DATE']
-
+@task(task_id='transform__ft_balance_f')
+def transform_ft_balance_f(name_df):
     pd_df = read_tmp(name_df)
-
-    pd_df[columns_type_date] = pd_df[columns_type_date].apply(pd.to_datetime)
+    pd_df['ON_DATE'] = pd.to_datetime(pd_df['ON_DATE'], dayfirst=True)
     pd_df = pd_df.iloc[: , 1:]
-
     save_tmp(pd_df, name_df)
 
 
-@task(task_id='transform_md_currency_d')
-def transform_md_currency_d(name_df):
-    columns_type_date = ['DATA_ACTUAL_DATE', 'DATA_ACTUAL_END_DATE']
-
+@task(task_id='transform_del_1_col')
+def transform_del_1_col(name_df):
     pd_df = read_tmp(name_df)
+    pd_df = pd_df.iloc[: , 1:]
+    save_tmp(pd_df, name_df)
+
+
+@task(task_id='transform_posting')
+def transform_posting(name_df):
+    pd_df = read_tmp(name_df)
+
+    pd_df['OPER_DATE'] = pd_df['OPER_DATE'].apply(pd.to_datetime)
+
+    pd_df = pd_df.iloc[: , 1:]
+    df = df \
+        .groupby([
+            'OPER_DATE', 
+            'CREDIT_ACCOUNT_RK', 
+            'DEBET_ACCOUNT_RK'
+        ], as_index=False) \
+        .sum()
     
-    pd_df[columns_type_date] = pd_df[columns_type_date].apply(pd.to_datetime)
-    pd_df = pd_df.iloc[: , 1:]
-
     save_tmp(pd_df, name_df)
 
+
+@task(task_id='transform_rm_dpls')
+def transform_rm_dpls(name_df):
+    pd_df = read_tmp(name_df)
+    pd_df = pd_df.iloc[: , 1:]
+    df = df.drop_duplicates()
+    save_tmp(pd_df, name_df)
+    
 
 #-- load tasks
 
@@ -106,8 +130,12 @@ def load_postgres(table_name):
 '''Подбор тасков трансофрмации по имени файла'''
 def select_transform_task(name_file):
     tasks_for_select = {
-        "md_ledger_account_s": transform_md_ledger_account_s,
-        "md_currency_d": transform_md_currency_d
+        "ft_balance_f": transform_ft_balance_f,
+        "md_account_d": transform_del_1_col,
+        "md_currency_d": transform_del_1_col,
+        "ft_posting_f": transform_posting,
+        "md_ledger_account_s": transform_del_1_col,
+        "md_exchange_rate_d": transform_rm_dpls,
     }
 
     return tasks_for_select[name_file]
@@ -141,7 +169,7 @@ with DAG("dag_etl_bank",
         tasks_end_start.append(set_logs())
 
     groups = []
-    for g_id in ['md_ledger_account_s', 'md_currency_d']:
+    for g_id in FILES_CSV:
         tg_id = f"{g_id}_etl_group"
 
         @task_group(group_id=tg_id)
@@ -158,8 +186,5 @@ with DAG("dag_etl_bank",
         groups.append(tg1())
 
 
-    tasks_end_start[0] >> sleep_5s >> [
-        groups[0],
-        groups[1]
-    ] >> tasks_end_start[1]
+    tasks_end_start[0] >> sleep_5s >> groups >> tasks_end_start[1]
     
