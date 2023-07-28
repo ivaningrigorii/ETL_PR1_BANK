@@ -20,17 +20,19 @@ TMP_PATH_SAVE_FILES = './dag_src'
 FILES_CSV = [
     'ft_balance_f',
     'md_account_d',
-    'ft_posting_f',
     'md_currency_d',
+    'ft_posting_f',
     'md_exchange_rate_d',
     'md_ledger_account_s'
 ]
 
 postgres_hook = PostgresHook(postgres_conn_id = 'postgres_neo_bank_1')
-engine = create_engine(postgres_hook.get_uri())
+ENGINE = create_engine(postgres_hook.get_uri())
 
 
-# загрузка и выгрузка pandas df в файл tmp файл csv --------
+# Загрузка и выгрузка pandas df в файл tmp файл csv --------
+
+
 def save_tmp(df, fname):
     os.makedirs(TMP_PATH_SAVE_FILES, exist_ok=True)
     df.to_csv(
@@ -38,6 +40,7 @@ def save_tmp(df, fname):
         index=False, 
         encoding='UTF-8'
     )
+
 
 def read_tmp(fname):
     return pd.read_csv(
@@ -47,9 +50,7 @@ def read_tmp(fname):
     )
 
 
-# ETL tasks  --------------------------
-# -- extract tasks
-
+# -- EXTRACT
 
 ''' Загрузка из csv, структура близка к табличной в БД'''
 @task(task_id='extract_csv')
@@ -65,12 +66,13 @@ def extract_csv(name_file_csv, encode_type):
 
 
 
-#-- transform tasks
+#-- TRANSFORM
 
 @task(task_id='transform__ft_balance_f')
 def transform_ft_balance_f(name_df):
     pd_df = read_tmp(name_df)
-    pd_df['ON_DATE'] = pd.to_datetime(pd_df['ON_DATE'], dayfirst=True)
+    pd_df['ON_DATE'] = pd.to_datetime(
+        pd_df['ON_DATE'], dayfirst=True)
     pd_df = pd_df.iloc[: , 1:]
     save_tmp(pd_df, name_df)
 
@@ -86,16 +88,12 @@ def transform_del_1_col(name_df):
 def transform_posting(name_df):
     pd_df = read_tmp(name_df)
 
-    pd_df['OPER_DATE'] = pd_df['OPER_DATE'].apply(pd.to_datetime)
-
     pd_df = pd_df.iloc[: , 1:]
-    df = df \
-        .groupby([
-            'OPER_DATE', 
-            'CREDIT_ACCOUNT_RK', 
-            'DEBET_ACCOUNT_RK'
-        ], as_index=False) \
-        .sum()
+    pd_df = pd_df.groupby([
+        'OPER_DATE', 
+        'CREDIT_ACCOUNT_RK', 
+        'DEBET_ACCOUNT_RK'
+    ], as_index=False).sum()
     
     save_tmp(pd_df, name_df)
 
@@ -104,17 +102,30 @@ def transform_posting(name_df):
 def transform_rm_dpls(name_df):
     pd_df = read_tmp(name_df)
     pd_df = pd_df.iloc[: , 1:]
-    df = df.drop_duplicates()
+    pd_df = pd_df.drop_duplicates()
+    save_tmp(pd_df, name_df)
+
+
+@task(task_id='transform_datetime')
+def transform_datetime(name_df):
+    pd_df = read_tmp(name_df)
+    pd_df = pd_df.iloc[: , 1:]
+
+    pd_df['DATA_ACTUAL_DATE'] \
+        = pd.to_datetime(pd_df['DATA_ACTUAL_DATE'])
+    pd_df['DATA_ACTUAL_END_DATE'] \
+        = pd.to_datetime(pd_df['DATA_ACTUAL_END_DATE'])
+
     save_tmp(pd_df, name_df)
     
 
-#-- load tasks
+#-- LOAD
 
 ''' Загрузка полученных df в БД '''
 @task(task_id='load_postgres')
 def load_postgres(table_name):
     metadata_obj = MetaData(schema = 'ds')
-    table = Table(table_name, metadata_obj, autoload_with=engine)
+    table = Table(table_name, metadata_obj, autoload_with=ENGINE)
     
     df = read_tmp(table_name)
     insert_statement = insert(table).values(df.values.tolist())
@@ -122,24 +133,24 @@ def load_postgres(table_name):
         constraint=table.primary_key,
         set_=dict(insert_statement.excluded),
     )
-    engine.execute(upsert_statement)
+    ENGINE.execute(upsert_statement)
 
-
-# DAG -----------------------------------
 
 '''Подбор тасков трансофрмации по имени файла'''
 def select_transform_task(name_file):
     tasks_for_select = {
         "ft_balance_f": transform_ft_balance_f,
-        "md_account_d": transform_del_1_col,
+        "md_account_d": transform_datetime,
         "md_currency_d": transform_del_1_col,
         "ft_posting_f": transform_posting,
-        "md_ledger_account_s": transform_del_1_col,
         "md_exchange_rate_d": transform_rm_dpls,
+        "md_ledger_account_s": transform_del_1_col,
     }
 
     return tasks_for_select[name_file]
 
+
+#-- DAG 
 
 with DAG("dag_etl_bank",
     start_date=datetime(2021, 1 ,1),
@@ -155,23 +166,61 @@ with DAG("dag_etl_bank",
         bash_command="sleep 5s"
     )
 
-    tasks_end_start = []
-    for t_id in ['start', 'end']:
-        @task(task_id=t_id)
-        def set_logs():
-            columns = ['action_date', 'status']
-            data = list(zip([datetime.now(), ], t_id))
+    # Логи для всего процесса --
 
-            pd.DataFrame(data=data, columns = columns) \
-                .to_sql(name = 'logs_info_etl_11_process', con = engine, 
-                    schema = 'logs', if_exists = 'append',index = False
-                )
-        tasks_end_start.append(set_logs())
+    def query_process_log(time_log, type_log):
+            return f'''
+                INSERT INTO logs.logs_info_etl_11_process 
+                    (action_date, status)
+                VALUES ('{time_log}', '{type_log}'
+            )'''
+
+    
+    @task(task_id='start')
+    def start(**kwargs):
+        ti = kwargs['ti']
+        time_start_process = datetime.now()
+        ENGINE.execute(query_process_log(time_start_process, 'start'))
+        pk_log = ENGINE.execute(f'''
+            SELECT
+                l.log_id
+            FROM logs.logs_info_etl_11_process as l
+            ORDER BY l.log_id DESC
+            LIMIT 1 
+        ''').fetchone()[0]
+        ti.xcom_push(value=pk_log, key='tstart')
+
+    @task(task_id='end')
+    def end():
+        ENGINE.execute(query_process_log(datetime.now(), 'end'))
+
+
 
     groups = []
     for g_id in FILES_CSV:
         tg_id = f"{g_id}_etl_group"
+        log_id = f'{g_id[:6]}_log'
 
+        def query_task_log(type_log, ti, tname):
+            pk_log = ti.xcom_pull(task_ids='start', key='tstart')
+            return f'''
+                INSERT INTO logs.log_table 
+                VALUES ('{tname}', '{datetime.now()}',
+                '{type_log}', {pk_log})
+            '''
+
+        # Логи для отдельных ETL процессов --
+        @task(task_id=f't_start')
+        def t_log_start(table_for_query, **kwargs):
+            ENGINE.execute(query_task_log('start', kwargs['ti'], table_for_query))
+
+        @task(task_id=f't_end')
+        def t_log_end(table_for_query, **kwargs):
+            ENGINE.execute(query_task_log('end', kwargs['ti'], table_for_query))
+        #--
+
+
+        ''' Группы ETL '''
         @task_group(group_id=tg_id)
         def tg1():
             enc_tps = {
@@ -183,8 +232,13 @@ with DAG("dag_etl_bank",
             extract_csv(name_file_csv=g_id, encode_type=enc_t) >> \
             select_transform_task(g_id)(g_id) >> load_postgres(g_id)
 
-        groups.append(tg1())
+        ''' Группы ETL с логированием '''
+        @task_group(group_id=log_id)
+        def log_group_exe(**kwargs):
+            t_log_start(g_id) >> tg1() >> t_log_end(g_id)
+
+        groups.append(log_group_exe())
 
 
-    tasks_end_start[0] >> sleep_5s >> groups >> tasks_end_start[1]
+    start() >> sleep_5s >> groups >> end()
     
