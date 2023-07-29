@@ -98,9 +98,23 @@ commit;
 create schema LOGS;
 
 create table LOGS.LOGS_INFO_ETL_11_PROCESS (
+	log_id SERIAL,
 	action_date TIMESTAMPTZ,
-	status VARCHAR(30)
+	status VARCHAR(30),
+
+	primary key (log_id)
 );
+
+create table LOGS.LOG_TABLE (
+	table_name VARCHAR(30),
+	action_date TIMESTAMPTZ,
+	status VARCHAR(30),
+	process_log_id INTEGER,
+	
+	foreign key (process_log_id) 
+		references LOGS.LOGS_INFO_ETL_11_PROCESS(log_id)
+);	
+
 commit;
 
 --------------------------------------------------------
@@ -114,10 +128,10 @@ drop table if exists DS.MD_EXCHANGE_RATE_D cascade;
 drop table if exists DS.MD_LEDGER_ACCOUNT_S cascade;
 drop schema DS;
 commit;
-
-
 drop table if exists LOGS.LOGS_INFO_ETL_11_PROCESS cascade;
+drop table if exists LOGS.LOG_TABLE cascade;
 drop schema LOGS;
+
 commit;
 
 ----------------------------------------------------------
@@ -129,7 +143,8 @@ commit;
  truncate DS.MD_CURRENCY_D;
  truncate DS.MD_EXCHANGE_RATE_D;
  truncate DS.MD_LEDGER_ACCOUNT_S;
- truncate LOGS.LOGS_INFO_ETL_11_PROCESS;
+ truncate LOGS.LOGS_INFO_ETL_11_PROCESS cascade;
+ truncate logs.log_table cascade;
  commit;
 
 
@@ -165,9 +180,58 @@ select
 	(select count(*) from ds.md_ledger_account_s mlas) as mlas;
 
 
--- статистика по логам
+-- Все логи по процессам
 select
   liep.status ,
   cast(liep.action_date as TIMESTAMP)
 from logs.logs_info_etl_11_process liep
 order by liep.action_date desc;
+
+-- Логи по всем ETL процессам файлов, по таскам
+select
+	lt.table_name ,
+	lt.action_date ,
+	lt.status ,
+	lt.process_log_id 
+from logs.log_table lt 
+where lt.process_log_id = (
+	select log_id 
+	from logs.logs_info_etl_11_process liep 
+	where status = 'start'
+	order by log_id desc
+	limit 1
+);
+
+-- минимальное значение времени выполнения и максимальное для etl
+--	по одному файлу
+
+select
+	lt.table_name,
+	max(action_date) - min(action_date)
+from logs.log_table lt 
+where lt.process_log_id = (
+	select log_id 
+	from logs.logs_info_etl_11_process liep 
+	where status = 'start'
+	order by log_id desc
+	limit 1
+)
+group by lt.table_name ;
+
+-- число незавершеённых (оборвавшихся) процессов
+
+select (
+	(select count(*)
+	from logs.logs_info_etl_11_process liep 
+	where status = 'start')
+		-
+	(select count(*)
+	from logs.logs_info_etl_11_process liep 
+	where status = 'end')
+) as count_not_end_prs;
+
+
+
+
+
+

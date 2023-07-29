@@ -1,19 +1,16 @@
 import os
 
 from airflow import DAG
-from airflow.utils.dates import days_ago
 from airflow.operators.bash import BashOperator
-from airflow.operators.python_operator import PythonOperator
-from airflow.operators.empty import EmptyOperator
 from airflow.hooks.postgres_hook import PostgresHook
 from airflow.decorators import task, task_group
-from airflow.utils.task_group import TaskGroup
 
 from sqlalchemy import create_engine, MetaData, Table
 from sqlalchemy.dialects.postgresql import insert
 import pandas as pd
 import numpy as np
 from datetime import datetime
+
 
 PATH_TO_FILES_CSV = '/home/grigorii/neoflex/project/src/1/1'
 TMP_PATH_SAVE_FILES = './dag_src'
@@ -31,8 +28,6 @@ ENGINE = create_engine(postgres_hook.get_uri())
 
 
 # Загрузка и выгрузка pandas df в файл tmp файл csv --------
-
-
 def save_tmp(df, fname):
     os.makedirs(TMP_PATH_SAVE_FILES, exist_ok=True)
     df.to_csv(
@@ -48,6 +43,7 @@ def read_tmp(fname):
             header='infer',
             keep_default_na=False
     )
+#--
 
 
 # -- EXTRACT
