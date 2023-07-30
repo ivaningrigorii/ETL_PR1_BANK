@@ -181,7 +181,7 @@ with DAG("dag_etl_bank",
             SELECT
                 l.log_id
             FROM logs.logs_info_etl_11_process as l
-            ORDER BY l.log_id DESC
+            ORDER BY l.log_id DESC 
             LIMIT 1 
         ''').fetchone()[0]
         ti.xcom_push(value=pk_log, key='tstart')
