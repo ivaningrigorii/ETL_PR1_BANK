@@ -23,9 +23,9 @@ FILES_CSV = [
     'md_ledger_account_s'
 ]
 
-# postgres_hook = PostgresHook(postgres_conn_id = 'postgres_neo_bank_1')
-# ENGINE = create_engine(postgres_hook.get_uri())
-ENGINE = create_engine('postgresql+psycopg2://neoflex_user:neoflex_user@localhost:5432/neoflex_first')
+postgres_hook = PostgresHook(postgres_conn_id = 'postgres_neo_bank_1')
+ENGINE = create_engine(postgres_hook.get_uri())
+#ENGINE = create_engine('postgresql+psycopg2://neoflex_user:neoflex_user@localhost:5432/neoflex_first')
 
 # Загрузка и выгрузка pandas df в файл tmp файл csv --------
 def save_tmp(df, fname):
