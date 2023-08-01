@@ -25,7 +25,6 @@ FILES_CSV = [
 
 # postgres_hook = PostgresHook(postgres_conn_id = 'postgres_neo_bank_1')
 # ENGINE = create_engine(postgres_hook.get_uri())
-from sqlalchemy import create_engine
 ENGINE = create_engine('postgresql+psycopg2://neoflex_user:neoflex_user@localhost:5432/neoflex_first')
 
 # Загрузка и выгрузка pandas df в файл tmp файл csv --------
