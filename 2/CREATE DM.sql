@@ -47,10 +47,33 @@ create table DM.DM_F101_ROUND_F (
     R_BALANCE_OUT_TOTAL NUMERIC(23,8)
 );
 
+create table dm.lg_messages (
+	record_id INT not null,
+	date_time TIMESTAMP,
+	pid INT,
+	message VARCHAR,
+	message_type VARCHAR,
+	usename VARCHAR, 
+	datname VARCHAR, 
+	client_addr VARCHAR, 
+	application_name VARCHAR,
+	backend_start TIMESTAMPTZ
+);
+
+CREATE SEQUENCE dm.seq_lg_messages
+OWNED BY dm.lg_messages.record_id;
+
 commit;
 
 
+-- Удаление
 
+drop schema if exists DM cascade;
+drop table if exists DM.DM_ACCOUNT_TURNOVER_F cascade;
+drop table if exists DM.DM_F101_ROUND_F cascade;	
+drop table if exists dm.lg_messages cascade;
+drop sequence if exists dm.seq_lg_messages;
 
+commit;
 
 
