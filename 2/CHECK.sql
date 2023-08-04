@@ -7,7 +7,7 @@
 -- Управление pg_cron
 
 -- m h dm mm dw
-select  cron.schedule('turnover', '*/1 * * * *', 
+select  cron.schedule('turnover', '14 * * * *', 
 	'do $$ 
 	begin
 		for i in 1..31 loop
@@ -18,19 +18,16 @@ select  cron.schedule('turnover', '*/1 * * * *',
 	end;$$'
 );
 
-select cron.schedule('f101', '*/1 * * * *', 
-	$$ dm.fill_f101_round_f(to_date('2018-01-01', 'yyyy-mm-dd')) $$
+select cron.schedule('f101', '15 * * * *', 
+	'call dm.fill_f101_round_f(to_date(''2018-01-01'', ''yyyy-mm-dd''))'
 );
+commit;
 
 
 select * from cron.job
 order by jobid desc;
 
 select * from cron.job_run_details;
-
--- удаление jobs
-select cron.unschedule('turnover');
-select cron.unschedule('f101');
 
 
 -- результат работы пакетов
@@ -65,22 +62,14 @@ from dm.dm_f101_round_f dfrf ;
 truncate dm.lg_messages;
 truncate dm.dm_account_turnover_f;
 truncate dm.dm_f101_round_f;
+delete from cron.job_run_details ;
 commit;
 
+-- удаление jobs
+select cron.unschedule('turnover');
+select cron.unschedule('f101');
+commit;
 
-
--- попытки что-то сделать 
-
-do $$ 
-	begin
-		for i in 1..31 loop
-		 call ds.fill_account_turnover_f(
-			to_date(concat('2018-01-', i) , 'yyyy-mm-dd')
-		 );
-		end loop;	
-end;$$
-
-call dm.fill_f101_round_f(to_date('2018-01-01', 'yyyy-mm-dd'))
 
 
 
