@@ -7,7 +7,7 @@
 -- Управление pg_cron
 
 -- m h dm mm dw
-select  cron.schedule('turnover', '14 * * * *', 
+select  cron.schedule('turnover', '51 * * * *', 
 	'do $$ 
 	begin
 		for i in 1..31 loop
@@ -18,10 +18,9 @@ select  cron.schedule('turnover', '14 * * * *',
 	end;$$'
 );
 
-select cron.schedule('f101', '15 * * * *', 
+select cron.schedule('f101', '52 * * * *', 
 	'call dm.fill_f101_round_f(to_date(''2018-01-01'', ''yyyy-mm-dd''))'
 );
-commit;
 
 
 select * from cron.job
@@ -29,12 +28,17 @@ order by jobid desc;
 
 select * from cron.job_run_details;
 
+-- удаление jobs
+select cron.unschedule('turnover');
+select cron.unschedule('f101');
+
 
 -- результат работы пакетов
 
 select * from dm.lg_messages lm ;
 
-select * from dm.dm_account_turnover_f;
+select * from dm.dm_account_turnover_f
+order by on_date ;
 
 select
  from_date         
@@ -65,10 +69,6 @@ truncate dm.dm_f101_round_f;
 delete from cron.job_run_details ;
 commit;
 
--- удаление jobs
-select cron.unschedule('turnover');
-select cron.unschedule('f101');
-commit;
 
 
 
