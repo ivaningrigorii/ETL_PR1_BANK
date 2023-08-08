@@ -51,4 +51,7 @@ def f101_to_postgres():
 def main():
     turnover_to_postgres()
     f101_to_postgres()
-main()
+
+
+if __name__ == '__main__':
+    main()

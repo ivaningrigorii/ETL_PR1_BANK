@@ -38,4 +38,6 @@ def main():
     load_full_postgres_tables('dm_account_turnover_f', ['on_date',])
     load_full_postgres_tables('dm_f101_round_f', ['from_date', 'to_date'])
 
-main()
+
+if __name__ == '__main__':
+    main()
