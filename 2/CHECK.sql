@@ -40,8 +40,6 @@ select * from dm.lg_messages lm ;
 select * from dm.dm_account_turnover_f
 order by on_date ;
 
-select * from dm.dm_f101_round_f dfrf ;
-
 select
  from_date         
              to_date           
