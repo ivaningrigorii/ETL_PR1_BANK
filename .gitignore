@@ -5,4 +5,5 @@ __pycache__
 src
 ./dag_src
 черновик.ipynb
-./3/src
+/3/src
+/4/res/
