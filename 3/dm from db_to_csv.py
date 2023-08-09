@@ -29,7 +29,7 @@ def load_full_postgres_tables(table_name, date_cols):
         sql=query, 
         con=ENGINE,
         parse_dates=date_cols
-        )
+    )
 
     save_tmp(df, table_name)
 
