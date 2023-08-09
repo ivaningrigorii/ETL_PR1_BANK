@@ -7,7 +7,7 @@
 -- Управление pg_cron
 
 -- m h dm mm dw
-select  cron.schedule('turnover', '55 * * * *', 
+select  cron.schedule('turnover', '57 * * * *', 
 	'do $$ 
 	begin
 		for i in 1..31 loop
@@ -18,7 +18,7 @@ select  cron.schedule('turnover', '55 * * * *',
 	end;$$'
 );
 
-select cron.schedule('f101', '56 * * * *', 
+select cron.schedule('f101', '58 * * * *', 
 	'call dm.fill_f101_round_f(to_date(''2018-01-01'', ''yyyy-mm-dd''))'
 );
 
@@ -40,6 +40,8 @@ select * from dm.lg_messages lm ;
 select * from dm.dm_account_turnover_f
 order by on_date ;
 
+select * from dm.dm_f101_round_f dfrf ;
+
 select
  from_date         
              to_date           
@@ -58,7 +60,6 @@ select
            , balance_out_rub  
            , balance_out_val   
            , balance_out_total 
-           
 from dm.dm_f101_round_f dfrf ;
 
 

@@ -26,7 +26,7 @@ def f101_to_postgres():
         filepath_or_buffer=f'{TMP_PATH_SAVE_FILES}/{file}.csv', 
         header='infer',
         parse_dates=['from_date', 'to_date']
-    ).fillna(0)
+    )
 
     return_to_postgres(df, file)
 
@@ -37,3 +37,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

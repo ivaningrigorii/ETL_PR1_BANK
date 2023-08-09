@@ -9,7 +9,7 @@ from log_env_config import ENGINE, \
 '''Загрузка данных в csv файл'''
 def save_tmp(df, fname):
     os.makedirs(TMP_PATH_SAVE_FILES, exist_ok=True)
-    df.fillna(0).to_csv(
+    df.to_csv(
         f'{TMP_PATH_SAVE_FILES}/{fname}.csv', 
         index=False, 
         encoding='UTF-8'
@@ -21,7 +21,8 @@ def save_tmp(df, fname):
 def load_full_postgres_tables(table_name, date_cols):
     log_to_table(f'start -> from db to csv {table_name}')
     query = f'''
-        SELECT *
+        SELECT 
+         *
         FROM dm.{table_name};
     '''
 
