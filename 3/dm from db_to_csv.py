@@ -2,8 +2,8 @@ import os
 
 from sqlalchemy.dialects.postgresql import insert
 import pandas as pd
-from log_env_config import ENGINE, TMP_PATH_SAVE_FILES, \
-    log_to_table
+from log_env_config import ENGINE, \
+    TMP_PATH_SAVE_FILES, log_to_table
 
 
 '''Загрузка данных в csv файл'''

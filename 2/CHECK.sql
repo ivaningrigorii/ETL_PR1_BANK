@@ -7,7 +7,7 @@
 -- Управление pg_cron
 
 -- m h dm mm dw
-select  cron.schedule('turnover', '51 * * * *', 
+select  cron.schedule('turnover', '55 * * * *', 
 	'do $$ 
 	begin
 		for i in 1..31 loop
@@ -18,7 +18,7 @@ select  cron.schedule('turnover', '51 * * * *',
 	end;$$'
 );
 
-select cron.schedule('f101', '52 * * * *', 
+select cron.schedule('f101', '56 * * * *', 
 	'call dm.fill_f101_round_f(to_date(''2018-01-01'', ''yyyy-mm-dd''))'
 );
 

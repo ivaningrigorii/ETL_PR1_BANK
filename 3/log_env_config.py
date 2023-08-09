@@ -3,10 +3,10 @@ from datetime import datetime
 
 
 '''Подключение к БД, путь к папкам'''
-ENGINE = create_engine(
-    "postgresql+psycopg2://neoflex_user:neoflex_user@localhost:5432/neoflex_first"
-)
-TMP_PATH_SAVE_FILES = './src'
+ENGINE_STR = "postgresql+psycopg2://neoflex_user:neoflex_user@localhost:5432/neoflex_first"
+TMP_PATH_SAVE_FILES = '/home/grigorii/docs/neoflex/dags/etl_first/3/src'
+ENGINE = create_engine(ENGINE_STR)
+
 
 def log_to_table(message):
     insert_statement = query = f'''
