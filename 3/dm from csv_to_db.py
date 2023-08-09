@@ -18,20 +18,6 @@ def return_to_postgres(df, file):
     log_to_table(f'end -> from csv to db {file}')
 
 
-'''Обработка данных из таблицы turnover'''
-def turnover_to_postgres():
-    file = 'dm_account_turnover_f'
-    
-    df = pd.read_csv(
-        filepath_or_buffer=f'{TMP_PATH_SAVE_FILES}/{file}.csv', 
-        header='infer',
-        parse_dates=['on_date', ]
-    ).fillna(0)
-
-    return_to_postgres(df, file)
-
-
-
 '''Обработка данных из таблицы 101 формы'''
 def f101_to_postgres():
     file = 'dm_f101_round_f'
@@ -46,7 +32,6 @@ def f101_to_postgres():
 
 
 def main():
-    turnover_to_postgres()
     f101_to_postgres()
 
 
