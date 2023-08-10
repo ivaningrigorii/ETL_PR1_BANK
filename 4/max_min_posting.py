@@ -6,6 +6,8 @@ import pandas as pd
 ENGINE_STR = "postgresql+psycopg2://neoflex_user:neoflex_user@localhost:5432/neoflex_first"
 TMP_PATH_SAVE_FILES = '/home/grigorii/docs/neoflex/dags/etl_first/4/res'
 ENGINE = create_engine(ENGINE_STR)
+
+# для linux
 clear = lambda: os.system('clear')
 
 
