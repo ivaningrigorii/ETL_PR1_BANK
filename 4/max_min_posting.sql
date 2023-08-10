@@ -7,7 +7,6 @@
  * 
  */
 
-
 create or replace function ds.min_max_posting (i_OnDate  date)
   returns table (
     date_posting date,
@@ -37,8 +36,6 @@ $$
         where 
 	      oper_date = i_OnDate 
 	      and i_OnDate between mad.data_actual_date and mad.data_actual_end_date
-          and mad.data_actual_date between date_trunc('month', i_OnDate) 
-    	    and (date_trunc('MONTH', i_OnDate) + INTERVAL '1 MONTH - 1 day')
     	    
     -- перевод проводок по дебетам в рубли (в ft_postgin_f они в разных валютах)	      
 	), debet_rub_postings as (
@@ -53,8 +50,7 @@ $$
         where 
 	      oper_date = i_OnDate 
 	      and i_OnDate between mad.data_actual_date and mad.data_actual_end_date
-          and mad.data_actual_date between date_trunc('month', i_OnDate) 
-    	    and (date_trunc('MONTH', i_OnDate) + INTERVAL '1 MONTH - 1 day')
+
     )
     -- расчёт показателей (наибольшие и наименьшие проводки за день )   
 	  select
